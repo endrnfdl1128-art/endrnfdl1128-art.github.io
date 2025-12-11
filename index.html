@@ -3,133 +3,192 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI 포스터 기획안 생성기 (Text-only)</title>
+    <title>AI 포스터 생성기 (Gemini + Imagen)</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
             padding: 20px;
-            background-color: #f4f4f9;
+            background-color: #f4f6f8;
+            color: #333;
         }
         .container {
             max-width: 800px;
             margin: 0 auto;
             background: white;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
         }
         h1 {
-            color: #333;
+            color: #1a1a1a;
             border-bottom: 2px solid #007bff;
-            padding-bottom: 10px;
-            margin-bottom: 20px;
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+            text-align: center;
         }
         label {
             display: block;
-            margin-top: 10px;
-            font-weight: bold;
-            color: #555;
+            margin-top: 15px;
+            font-weight: 600;
+            color: #444;
+            margin-bottom: 5px;
         }
         input[type="text"], textarea {
             width: 100%;
-            padding: 10px;
-            margin-top: 5px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box; /* 패딩이 너비에 포함되도록 */
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 15px;
+            transition: border-color 0.2s;
+        }
+        input[type="text"]:focus, textarea:focus {
+            border-color: #007bff;
+            outline: none;
         }
         button {
+            width: 100%;
             background-color: #007bff;
             color: white;
-            padding: 12px 20px;
-            margin-top: 20px;
+            padding: 15px;
+            margin-top: 30px;
             border: none;
-            border-radius: 4px;
+            border-radius: 8px;
             cursor: pointer;
-            font-size: 16px;
-            transition: background-color 0.3s;
+            font-size: 18px;
+            font-weight: bold;
+            transition: background-color 0.2s;
         }
         button:hover {
             background-color: #0056b3;
         }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        /* 결과 영역 스타일 */
         #resultContainer {
-            margin-top: 30px;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px dashed #ddd;
+            display: none; /* 초기에는 숨김 */
+            text-align: center;
+        }
+        
+        #generatedImage {
+            max-width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            margin-bottom: 20px;
+        }
+
+        .prompt-box {
+            background-color: #f8f9fa;
             padding: 15px;
-            border: 1px solid #ddd;
-            background-color: #f9f9f9;
-            border-radius: 4px;
+            border-radius: 8px;
+            text-align: left;
+            font-size: 13px;
+            color: #666;
+            border: 1px solid #eee;
         }
-        #resultOutput {
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            font-family: Consolas, monospace;
-            font-size: 14px;
-            color: #333;
-        }
+
         .required::after {
             content: " *";
-            color: red;
+            color: #e74c3c;
+        }
+
+        /* 로딩 스피너 */
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #007bff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+            display: none;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>📝 포스터 기획안 요청 (Gemini API)</h1>
-    <p>아래 정보를 입력하여 AI로부터 포스터 디자인 및 카피 기획안을 받아보세요.</p>
+    <h1>🎨 AI 포스터 디자이너</h1>
+    <p style="text-align: center; color: #666; margin-bottom: 30px;">
+        Gemini가 기획하고 Imagen이 그려주는 원스톱 포스터 생성 서비스
+    </p>
 
     <div id="posterForm">
-        <label for="text" class="required">메인 문구 / 카피:</label>
-        <input type="text" id="text" value="지금 가입하면 첫 달 50% 할인!" required>
+        <label for="text" class="required">메인 문구 / 카피</label>
+        <input type="text" id="text" value="지금 가입하면 첫 달 50% 할인!" placeholder="포스터에 들어갈 핵심 문구를 입력하세요" required>
 
-        <label for="description">캠페인/상품 설명:</label>
-        <textarea id="description" rows="3">헬스장 신규 오픈 기념, 3개월 등록 시 첫 달 요금 50% 할인 프로모션입니다.</textarea>
+        <label for="description">캠페인 상세 설명</label>
+        <textarea id="description" rows="3" placeholder="어떤 상품이나 이벤트인가요?">헬스장 신규 오픈 기념, 3개월 등록 시 첫 달 요금 50% 할인 프로모션입니다.</textarea>
 
-        <label for="brand_tone">브랜드 톤 & 무드:</label>
-        <input type="text" id="brand_tone" value="활기차고 에너지 넘치는, 깔끔한 느낌">
+        <label for="brand_tone">브랜드 톤 & 무드</label>
+        <input type="text" id="brand_tone" value="활기차고 에너지 넘치는, 깔끔한 느낌, 3D 일러스트 스타일">
 
-        <label for="target_audience">타겟 고객:</label>
+        <label for="target_audience">타겟 고객</label>
         <input type="text" id="target_audience" value="20~30대 직장인">
 
-        <label for="image_keywords">이미지 키워드 (쉼표 구분):</label>
-        <input type="text" id="image_keywords" value="헬스장, 운동하는 사람, 밝은 분위기, 땀">
+        <label for="image_keywords">이미지 키워드 (쉼표 구분)</label>
+        <input type="text" id="image_keywords" value="헬스장, 운동하는 사람, 밝은 분위기, 땀, 파란색 배경">
         
-        <button id="generateButton" onclick="generatePosterPlan()">🚀 기획안 생성 요청</button>
+        <button id="generateButton" onclick="generatePosterImage()">✨ 포스터 생성하기</button>
     </div>
 
+    <div id="loadingIndicator" class="loader"></div>
+    <p id="loadingText" style="text-align: center; display: none; color: #666;">AI가 열심히 그림을 그리고 있습니다... (약 10초 소요)</p>
+
     <div id="resultContainer">
-        <h2>📊 기획안 결과 (JSON)</h2>
-        <pre id="resultOutput">요청 버튼을 누르면 여기에 결과가 표시됩니다.</pre>
+        <h2 style="margin-bottom: 20px;">🎉 생성된 포스터</h2>
+        <img id="generatedImage" src="" alt="AI가 생성한 포스터" />
+        
+        <div class="prompt-box">
+            <strong>💡 Gemini가 작성한 프롬프트 (참고용):</strong>
+            <p id="promptUsedResult" style="margin-top: 5px; font-family: monospace;"></p>
+        </div>
+        
+        <button onclick="downloadImage()" style="background-color: #28a745; margin-top: 15px;">💾 이미지 저장하기</button>
     </div>
 </div>
 
 <script>
-    const SERVER_URL = 'https://e414bbac-a41e-431a-95c8-37e80ffa48ac-00-1p9b824eqx21u.pike.replit.dev'; 
+    // ⚠️ 중요: 로컬에서 테스트할 때는 'http://localhost:8000'을 사용하세요.
+    // Replit이나 외부 서버라면 해당 URL을 넣으세요.
+    const SERVER_URL = 'http://localhost:8000'; 
 
-    async function generatePosterPlan() {
+    async function generatePosterImage() {
         const generateButton = document.getElementById('generateButton');
-        const resultOutput = document.getElementById('resultOutput');
+        const resultContainer = document.getElementById('resultContainer');
+        const generatedImage = document.getElementById('generatedImage');
+        const promptResult = document.getElementById('promptUsedResult');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const loadingText = document.getElementById('loadingText');
         
-        // 버튼 비활성화 및 로딩 표시
-        generateButton.disabled = true;
-        generateButton.textContent = '⏳ 기획안 생성 중...';
-        resultOutput.textContent = '서버에 요청을 보내고 Gemini의 응답을 기다리고 있습니다...';
-
-        // 1. 입력 값 수집
+        // 1. 입력 값 검증
         const textValue = document.getElementById('text').value.trim();
         if (!textValue) {
-            alert("메인 문구/카피는 필수 입력 사항입니다.");
-            generateButton.disabled = false;
-            generateButton.textContent = '🚀 기획안 생성 요청';
-            resultOutput.textContent = '요청 버튼을 누르면 여기에 결과가 표시됩니다.';
+            alert("메인 문구는 필수입니다!");
             return;
         }
 
-        // image_keywords를 리스트 형태로 변환
+        // 2. UI 초기화 (로딩 시작)
+        generateButton.disabled = true;
+        resultContainer.style.display = 'none';
+        loadingIndicator.style.display = 'block';
+        loadingText.style.display = 'block';
+
+        // 키워드 리스트 변환
         const keywordsInput = document.getElementById('image_keywords').value;
         const keywordsList = keywordsInput 
             ? keywordsInput.split(',').map(k => k.trim()).filter(k => k.length > 0)
-            : null;
+            : [];
 
         const requestData = {
             "text": textValue,
@@ -140,8 +199,8 @@
         };
 
         try {
-            // 2. FastAPI 엔드포인트 호출 (JSON Body)
-            const response = await fetch(`${SERVER_URL}/generate_poster`, {
+            // 3. 백엔드 요청 (/generate_poster_image)
+            const response = await fetch(`${SERVER_URL}/generate_poster_image`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -152,25 +211,33 @@
             const data = await response.json();
             
             if (!response.ok) {
-                // HTTP 오류 응답 처리 (예: 404, 500 등)
-                resultOutput.textContent = `❌ HTTP 오류 (${response.status}):\n` + JSON.stringify(data, null, 2);
-                throw new Error(`서버 응답 오류: ${response.status}`);
+                throw new Error(data.detail || '서버 오류가 발생했습니다.');
             }
 
-            // 3. 성공 응답 (JSON 기획안) 표시
-            resultOutput.textContent = JSON.stringify(data, null, 2);
-            
+            // 4. 성공 시 이미지 표시
+            // Base64 문자열을 src에 주입
+            generatedImage.src = `data:image/png;base64,${data.image_base64}`;
+            promptResult.textContent = data.prompt_used; // 사용된 프롬프트 표시
+
+            resultContainer.style.display = 'block';
+
         } catch (error) {
-            console.error('❌ API 호출 중 오류 발생:', error);
-            // 이미 결과창에 오류를 표시했을 수도 있으므로 중복 메시지 방지
-            if (!resultOutput.textContent.includes('❌')) {
-                resultOutput.textContent = `❌ 서버 연결 또는 응답 처리 실패: ${error.message || '알 수 없는 오류'}`;
-            }
+            console.error('Error:', error);
+            alert(`❌ 실패했습니다: ${error.message}`);
         } finally {
-            // 버튼 다시 활성화
+            // 5. 로딩 종료
             generateButton.disabled = false;
-            generateButton.textContent = '🚀 기획안 생성 요청';
+            loadingIndicator.style.display = 'none';
+            loadingText.style.display = 'none';
         }
+    }
+
+    function downloadImage() {
+        const img = document.getElementById('generatedImage');
+        const link = document.createElement('a');
+        link.href = img.src;
+        link.download = 'ai_poster.png';
+        link.click();
     }
 </script>
 
