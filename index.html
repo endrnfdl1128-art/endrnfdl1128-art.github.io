@@ -3,193 +3,176 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>광운대학교 2025년 2학기 시간표 자동 생성기</title>
-
-    <!-- ======================= -->
-    <!--      CSS 내부 통합      -->
-    <!-- ======================= -->
+    <title>AI 포스터 기획안 생성기 (Text-only)</title>
     <style>
         body {
-            font-family: "Pretendard", sans-serif;
-            background: #f4f6fa;
-            margin: 0;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f4f4f9;
         }
-
         .container {
-            max-width: 600px;
-            margin: auto;
-            background: #ffffff;
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
             padding: 30px;
-            margin-top: 40px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
-
         h1 {
-            text-align: center;
-            color: #003e8b;
-            margin-bottom: 10px;
+            color: #333;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
         }
-
-        .subtitle {
-            text-align: center;
-            font-size: 14px;
-            margin-bottom: 25px;
-            color: #444;
-        }
-
-        .section {
-            margin-bottom: 25px;
-        }
-
         label {
             display: block;
+            margin-top: 10px;
             font-weight: bold;
-            margin-bottom: 8px;
+            color: #555;
         }
-
-        select, input[type="number"] {
+        input[type="text"], textarea {
             width: 100%;
             padding: 10px;
-            border: 1px solid #d1d1d1;
-            border-radius: 6px;
-            margin-bottom: 10px;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box; /* 패딩이 너비에 포함되도록 */
         }
-
-        .input-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-        }
-
-        .input-row input {
-            width: 60%;
-        }
-
-        .checkbox-group label {
-            margin-right: 10px;
-        }
-
         button {
-            width: 100%;
-            padding: 13px;
-            background: #003e8b;
+            background-color: #007bff;
             color: white;
-            font-size: 16px;
+            padding: 12px 20px;
+            margin-top: 20px;
             border: none;
-            border-radius: 6px;
+            border-radius: 4px;
             cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
         }
-
         button:hover {
-            background: #0052b0;
+            background-color: #0056b3;
         }
-
-        .resultBox {
+        #resultContainer {
             margin-top: 30px;
-            padding: 20px;
-            background: #eef3ff;
-            border-left: 4px solid #003e8b;
-            border-radius: 6px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            background-color: #f9f9f9;
+            border-radius: 4px;
         }
-
-        .hidden {
-            display: none;
-        }
-
-        pre {
+        #resultOutput {
             white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: Consolas, monospace;
+            font-size: 14px;
+            color: #333;
+        }
+        .required::after {
+            content: " *";
+            color: red;
         }
     </style>
 </head>
-
 <body>
 
-    <div class="container">
+<div class="container">
+    <h1>📝 포스터 기획안 요청 (Gemini API)</h1>
+    <p>아래 정보를 입력하여 AI로부터 포스터 디자인 및 카피 기획안을 받아보세요.</p>
 
-        <h1>📅 광운대학교 2025년 2학기 시간표 자동 생성기</h1>
-        <p class="subtitle">조건을 입력하면 자동으로 최적 시간표를 생성합니다.</p>
+    <div id="posterForm">
+        <label for="text" class="required">메인 문구 / 카피:</label>
+        <input type="text" id="text" value="지금 가입하면 첫 달 50% 할인!" required>
 
-        <!-- 학과 선택 -->
-        <div class="section">
-            <label for="majorSelect">✔ 들을 자신의 학과</label>
-            <select id="majorSelect">
-                <option value="">학과 선택</option>
-                <option value="컴퓨터정보공학부">컴퓨터정보공학부</option>
-                <option value="전자공학과">전자공학과</option>
-                <option value="소프트웨어학부">소프트웨어학부</option>
-                <option value="경영학부">경영학부</option>
-                <option value="로봇학부">로봇학부</option>
-            </select>
-        </div>
+        <label for="description">캠페인/상품 설명:</label>
+        <textarea id="description" rows="3">헬스장 신규 오픈 기념, 3개월 등록 시 첫 달 요금 50% 할인 프로모션입니다.</textarea>
 
-        <!-- 전공/교양 학점 -->
-        <div class="section">
-            <label>✔ 들을 전공/교양 학점</label>
-            <div class="input-row">
-                <label>전공 학점: </label>
-                <input type="number" id="majorCredit" placeholder="예: 9">
-            </div>
-            <div class="input-row">
-                <label>교양 학점: </label>
-                <input type="number" id="liberalCredit" placeholder="예: 6">
-            </div>
-        </div>
+        <label for="brand_tone">브랜드 톤 & 무드:</label>
+        <input type="text" id="brand_tone" value="활기차고 에너지 넘치는, 깔끔한 느낌">
 
-        <!-- 공강 요일 체크 -->
-        <div class="section">
-            <label>✔ 원하는 공강 요일</label>
-            <div class="checkbox-group">
-                <label><input type="checkbox" value="월"> 월</label>
-                <label><input type="checkbox" value="화"> 화</label>
-                <label><input type="checkbox" value="수"> 수</label>
-                <label><input type="checkbox" value="목"> 목</label>
-                <label><input type="checkbox" value="금"> 금</label>
-            </div>
-        </div>
+        <label for="target_audience">타겟 고객:</label>
+        <input type="text" id="target_audience" value="20~30대 직장인">
 
-        <!-- 생성 버튼 -->
-        <button id="generateBtn">⏳ 시간표 생성하기</button>
-
-        <!-- 결과 표시 -->
-        <div id="resultBox" class="resultBox hidden">
-            <h2>🧾 생성된 시간표</h2>
-            <pre id="result"></pre>
-        </div>
-
+        <label for="image_keywords">이미지 키워드 (쉼표 구분):</label>
+        <input type="text" id="image_keywords" value="헬스장, 운동하는 사람, 밝은 분위기, 땀">
+        
+        <button id="generateButton" onclick="generatePosterPlan()">🚀 기획안 생성 요청</button>
     </div>
 
-    <!-- ======================= -->
-    <!--       JS 내부 통합      -->
-    <!-- ======================= -->
-    <script>
-        document.getElementById("generateBtn").addEventListener("click", () => {
-            const major = document.getElementById("majorSelect").value;
-            const majorCredit = document.getElementById("majorCredit").value;
-            const liberalCredit = document.getElementById("liberalCredit").value;
+    <div id="resultContainer">
+        <h2>📊 기획안 결과 (JSON)</h2>
+        <pre id="resultOutput">요청 버튼을 누르면 여기에 결과가 표시됩니다.</pre>
+    </div>
+</div>
 
-            const offDays = [];
-            document.querySelectorAll("input[type='checkbox']:checked").forEach(chk => {
-                offDays.push(chk.value);
+<script>
+    const SERVER_URL = 'https://e414bbac-a41e-431a-95c8-37e80ffa48ac-00-1p9b824eqx21u.pike.replit.dev'; 
+
+    async function generatePosterPlan() {
+        const generateButton = document.getElementById('generateButton');
+        const resultOutput = document.getElementById('resultOutput');
+        
+        // 버튼 비활성화 및 로딩 표시
+        generateButton.disabled = true;
+        generateButton.textContent = '⏳ 기획안 생성 중...';
+        resultOutput.textContent = '서버에 요청을 보내고 Gemini의 응답을 기다리고 있습니다...';
+
+        // 1. 입력 값 수집
+        const textValue = document.getElementById('text').value.trim();
+        if (!textValue) {
+            alert("메인 문구/카피는 필수 입력 사항입니다.");
+            generateButton.disabled = false;
+            generateButton.textContent = '🚀 기획안 생성 요청';
+            resultOutput.textContent = '요청 버튼을 누르면 여기에 결과가 표시됩니다.';
+            return;
+        }
+
+        // image_keywords를 리스트 형태로 변환
+        const keywordsInput = document.getElementById('image_keywords').value;
+        const keywordsList = keywordsInput 
+            ? keywordsInput.split(',').map(k => k.trim()).filter(k => k.length > 0)
+            : null;
+
+        const requestData = {
+            "text": textValue,
+            "description": document.getElementById('description').value,
+            "brand_tone": document.getElementById('brand_tone').value,
+            "target_audience": document.getElementById('target_audience').value,
+            "image_keywords": keywordsList
+        };
+
+        try {
+            // 2. FastAPI 엔드포인트 호출 (JSON Body)
+            const response = await fetch(`${SERVER_URL}/generate_poster`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestData)
             });
 
-            const resultBox = document.getElementById("resultBox");
-            const result = document.getElementById("result");
+            const data = await response.json();
+            
+            if (!response.ok) {
+                // HTTP 오류 응답 처리 (예: 404, 500 등)
+                resultOutput.textContent = `❌ HTTP 오류 (${response.status}):\n` + JSON.stringify(data, null, 2);
+                throw new Error(`서버 응답 오류: ${response.status}`);
+            }
 
-            // 현재는 예시 출력 (AI API 연결 전 임시)
-            const output = `
-📚 선택한 학과: ${major}
-🎓 전공 학점: ${majorCredit}
-📘 교양 학점: ${liberalCredit}
-🚫 공강 요일: ${offDays.join(", ")}
-
-AI 시간표 생성 기능은 백엔드 + Gemini API 연결 후 활성화됩니다.
-            `;
-
-            result.textContent = output;
-            resultBox.classList.remove("hidden");
-        });
-    </script>
+            // 3. 성공 응답 (JSON 기획안) 표시
+            resultOutput.textContent = JSON.stringify(data, null, 2);
+            
+        } catch (error) {
+            console.error('❌ API 호출 중 오류 발생:', error);
+            // 이미 결과창에 오류를 표시했을 수도 있으므로 중복 메시지 방지
+            if (!resultOutput.textContent.includes('❌')) {
+                resultOutput.textContent = `❌ 서버 연결 또는 응답 처리 실패: ${error.message || '알 수 없는 오류'}`;
+            }
+        } finally {
+            // 버튼 다시 활성화
+            generateButton.disabled = false;
+            generateButton.textContent = '🚀 기획안 생성 요청';
+        }
+    }
+</script>
 
 </body>
 </html>
