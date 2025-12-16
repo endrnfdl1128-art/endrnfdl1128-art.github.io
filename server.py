@@ -83,10 +83,15 @@ app = FastAPI(
     version="2.0.0",
 )
 
-# CORS: 모든 도메인 허용 (개발 편의)
+# CORS: GitHub Pages 도메인 명시적 허용
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://endrnfdl1128-art.github.io",
+        "http://localhost:5000",
+        "http://localhost:8000",
+        "*"  # 개발용 (필요하다면 유지, 배포 시 제거나 주의)
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
