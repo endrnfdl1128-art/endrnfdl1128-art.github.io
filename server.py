@@ -87,10 +87,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://endrnfdl1128-art.github.io",
-        "http://localhost:5000",
-        "http://localhost:8000",
-        "*"  # 개발용 (필요하다면 유지, 배포 시 제거나 주의)
+        "https://endrnfdl1128-art.github.io"
     ],
     allow_credentials=True,
     allow_methods=["*"],
