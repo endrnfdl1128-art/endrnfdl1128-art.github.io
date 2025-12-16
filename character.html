@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>캐릭터 생성 - AI TRPG</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="header">
+    <h1>🧙 캐릭터 생성</h1>
+    <p id="scenarioTitle">모험을 함께할 캐릭터를 만드세요</p>
+  </div>
+
+  <div class="container">
+    <div class="grid-2">
+      <!-- 왼쪽: 캐릭터 정보 -->
+      <div>
+        <div class="card">
+          <h2>📝 기본 정보</h2>
+          
+          <div class="form-group">
+            <label for="charName">캐릭터 이름 *</label>
+            <input type="text" id="charName" placeholder="캐릭터의 이름을 입력하세요">
+          </div>
+
+          <div class="form-group">
+            <label for="charClass">직업/역할 *</label>
+            <input type="text" id="charClass" placeholder="예: 전사, 마법사, 탐정, 해커, 의사">
+          </div>
+
+          <div class="form-group">
+            <label for="charBackground">배경 스토리</label>
+            <textarea id="charBackground" rows="4" placeholder="캐릭터의 과거, 성격, 특징 등을 자유롭게 작성하세요. AI가 이를 참고해 이야기를 진행합니다."></textarea>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>🎒 시작 장비</h2>
+          <div class="form-group">
+            <label for="startItems">소지품 (쉼표로 구분)</label>
+            <input type="text" id="startItems" placeholder="예: 검, 방패, 회복 물약">
+          </div>
+          <p class="text-muted" style="font-size: 0.9rem;">
+            시나리오에 맞는 장비를 설정하세요. 비워두면 기본 장비가 지급됩니다.
+          </p>
+        </div>
+      </div>
+
+      <!-- 오른쪽: 스탯 -->
+      <div>
+        <div class="card">
+          <h2>📊 스탯 배분</h2>
+          
+          <div class="stat-points">
+            <p>남은 포인트</p>
+            <div class="number" id="remainingPoints">20</div>
+          </div>
+
+          <div class="stat-input">
+            <label>💪 힘 (Strength)</label>
+            <div>
+              <button onclick="adjustStat('strength', -1)">-</button>
+              <input type="number" id="stat_strength" value="10" min="1" max="20" readonly>
+              <button onclick="adjustStat('strength', 1)">+</button>
+            </div>
+          </div>
+          <p class="text-muted" style="font-size: 0.8rem; margin-bottom: 16px;">근접 전투, 물건 들기, 문 부수기</p>
+
+          <div class="stat-input">
+            <label>🏃 민첩 (Agility)</label>
+            <div>
+              <button onclick="adjustStat('agility', -1)">-</button>
+              <input type="number" id="stat_agility" value="10" min="1" max="20" readonly>
+              <button onclick="adjustStat('agility', 1)">+</button>
+            </div>
+          </div>
+          <p class="text-muted" style="font-size: 0.8rem; margin-bottom: 16px;">회피, 은신, 정밀한 동작</p>
+
+          <div class="stat-input">
+            <label>🧠 지능 (Intelligence)</label>
+            <div>
+              <button onclick="adjustStat('intelligence', -1)">-</button>
+              <input type="number" id="stat_intelligence" value="10" min="1" max="20" readonly>
+              <button onclick="adjustStat('intelligence', 1)">+</button>
+            </div>
+          </div>
+          <p class="text-muted" style="font-size: 0.8rem; margin-bottom: 16px;">지식, 마법, 기계 조작, 추리</p>
+
+          <div class="stat-input">
+            <label>🍀 행운 (Luck)</label>
+            <div>
+              <button onclick="adjustStat('luck', -1)">-</button>
+              <input type="number" id="stat_luck" value="10" min="1" max="20" readonly>
+              <button onclick="adjustStat('luck', 1)">+</button>
+            </div>
+          </div>
+          <p class="text-muted" style="font-size: 0.8rem; margin-bottom: 16px;">우연한 발견, 치명타, 위기 탈출</p>
+
+          <button class="btn btn-secondary btn-block mt-20" onclick="resetStats()">스탯 초기화</button>
+        </div>
+
+        <!-- HP 설정 -->
+        <div class="card">
+          <h2>❤️ 체력 (HP)</h2>
+          <div class="stat-input">
+            <label>최대 HP</label>
+            <div>
+              <button onclick="adjustHP(-10)">-</button>
+              <input type="number" id="maxHP" value="100" min="50" max="200" readonly>
+              <button onclick="adjustHP(10)">+</button>
+            </div>
+          </div>
+          <p class="text-muted" style="font-size: 0.8rem;">50~200 사이로 설정. 높을수록 생존력 증가.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 버튼 -->
+    <div class="btn-group mt-20">
+      <a href="scenario.html" class="btn btn-secondary">← 시나리오 선택</a>
+      <button class="btn btn-primary btn-large" onclick="createCharacter()">⚔️ 모험 시작!</button>
+    </div>
+
+    <!-- 기존 캐릭터 -->
+    <div class="card mt-20">
+      <h2>👥 저장된 캐릭터</h2>
+      <div id="characterList">
+        <!-- JS로 채움 -->
+      </div>
+    </div>
+  </div>
+
+  <script src="js/storage.js"></script>
+  <script>
+    let scenarioId = null;
+    let scenario = null;
+    const BASE_STAT = 10;
+    const TOTAL_POINTS = 20;
+
+    // 페이지 로드
+    document.addEventListener('DOMContentLoaded', () => {
+      // URL에서 시나리오 ID 가져오기
+      const params = new URLSearchParams(window.location.search);
+      scenarioId = params.get('scenario');
+      
+      if (scenarioId) {
+        scenario = Storage.getScenario(scenarioId);
+        if (scenario) {
+          document.getElementById('scenarioTitle').textContent = `시나리오: ${scenario.title}`;
+        }
+      }
+
+      loadExistingCharacters();
+      updatePoints();
+    });
+
+    // 스탯 조절
+    function adjustStat(stat, delta) {
+      const input = document.getElementById(`stat_${stat}`);
+      const currentValue = parseInt(input.value);
+      const newValue = currentValue + delta;
+      
+      // 범위 체크
+      if (newValue < 1 || newValue > 20) return;
+      
+      // 포인트 체크
+      const pointsNeeded = delta > 0 ? delta : 0;
+      const pointsReturned = delta < 0 ? -delta : 0;
+      const remaining = getRemainingPoints();
+      
+      if (pointsNeeded > remaining) {
+        alert('포인트가 부족합니다!');
+        return;
+      }
+      
+      input.value = newValue;
+      updatePoints();
+    }
+
+    // HP 조절
+    function adjustHP(delta) {
+      const input = document.getElementById('maxHP');
+      const newValue = parseInt(input.value) + delta;
+      if (newValue >= 50 && newValue <= 200) {
+        input.value = newValue;
+      }
+    }
+
+    // 남은 포인트 계산
+    function getRemainingPoints() {
+      const stats = ['strength', 'agility', 'intelligence', 'luck'];
+      let used = 0;
+      stats.forEach(stat => {
+        const value = parseInt(document.getElementById(`stat_${stat}`).value);
+        used += value - BASE_STAT;
+      });
+      return TOTAL_POINTS - used;
+    }
+
+    // 포인트 표시 업데이트
+    function updatePoints() {
+      const remaining = getRemainingPoints();
+      const display = document.getElementById('remainingPoints');
+      display.textContent = remaining;
+      display.style.color = remaining < 0 ? 'var(--danger)' : 'var(--accent)';
+    }
+
+    // 스탯 초기화
+    function resetStats() {
+      ['strength', 'agility', 'intelligence', 'luck'].forEach(stat => {
+        document.getElementById(`stat_${stat}`).value = BASE_STAT;
+      });
+      updatePoints();
+    }
+
+    // 캐릭터 생성
+    function createCharacter() {
+      const name = document.getElementById('charName').value.trim();
+      const charClass = document.getElementById('charClass').value.trim();
+      const background = document.getElementById('charBackground').value.trim();
+      const itemsStr = document.getElementById('startItems').value.trim();
+      
+      // 유효성 검사
+      if (!name) {
+        alert('캐릭터 이름을 입력해주세요.');
+        return;
+      }
+      if (!charClass) {
+        alert('직업/역할을 입력해주세요.');
+        return;
+      }
+      
+      const remaining = getRemainingPoints();
+      if (remaining < 0) {
+        alert('스탯 포인트를 초과했습니다!');
+        return;
+      }
+      if (remaining > 0) {
+        if (!confirm(`아직 ${remaining} 포인트가 남았습니다. 그대로 진행하시겠습니까?`)) {
+          return;
+        }
+      }
+
+      // 시나리오 체크
+      if (!scenarioId || !scenario) {
+        alert('시나리오를 먼저 선택해주세요.');
+        window.location.href = 'scenario.html';
+        return;
+      }
+
+      // 캐릭터 데이터 구성
+      const maxHP = parseInt(document.getElementById('maxHP').value);
+      const items = itemsStr ? itemsStr.split(',').map(s => s.trim()).filter(s => s) : ['기본 장비'];
+
+      const character = {
+        name,
+        class: charClass,
+        background: background || '알려지지 않은 과거를 가진 모험가',
+        stats: {
+          hp: maxHP,
+          maxHp: maxHP,
+          strength: parseInt(document.getElementById('stat_strength').value),
+          agility: parseInt(document.getElementById('stat_agility').value),
+          intelligence: parseInt(document.getElementById('stat_intelligence').value),
+          luck: parseInt(document.getElementById('stat_luck').value)
+        },
+        inventory: items
+      };
+
+      // 저장
+      const saved = Storage.saveCharacter(character);
+
+      // 게임 시작
+      Storage.startNewGame(scenarioId, saved.id);
+      window.location.href = 'game.html';
+    }
+
+    // 기존 캐릭터 로드
+    function loadExistingCharacters() {
+      const characters = Storage.getCharacters();
+      const listDiv = document.getElementById('characterList');
+
+      if (characters.length === 0) {
+        listDiv.innerHTML = '<p class="text-muted">저장된 캐릭터가 없습니다.</p>';
+        return;
+      }
+
+      listDiv.innerHTML = characters.map(c => `
+        <div class="save-item">
+          <div class="save-info">
+            <h4>${c.name}</h4>
+            <p>${c.class} · HP ${c.stats?.maxHp || 100}</p>
+          </div>
+          <div class="save-actions">
+            <button class="btn btn-primary" onclick="useCharacter('${c.id}')">선택</button>
+            <button class="btn btn-secondary" onclick="deleteCharacter('${c.id}')">삭제</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // 기존 캐릭터 사용
+    function useCharacter(charId) {
+      if (!scenarioId || !scenario) {
+        alert('시나리오를 먼저 선택해주세요.');
+        window.location.href = 'scenario.html';
+        return;
+      }
+
+      Storage.startNewGame(scenarioId, charId);
+      window.location.href = 'game.html';
+    }
+
+    // 캐릭터 삭제
+    function deleteCharacter(id) {
+      if (confirm('이 캐릭터를 삭제하시겠습니까?')) {
+        Storage.deleteCharacter(id);
+        loadExistingCharacters();
+      }
+    }
+  </script>
+
+  <style>
+    /* 스탯 조절 버튼 스타일 */
+    .stat-input button {
+      width: 32px;
+      height: 32px;
+      border: 1px solid var(--border);
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 1.2rem;
+      transition: all 0.2s;
+    }
+    .stat-input button:hover {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+    .stat-input input[type="number"] {
+      width: 50px;
+      text-align: center;
+      -moz-appearance: textfield;
+      margin: 0 8px;
+    }
+    .stat-input input::-webkit-outer-spin-button,
+    .stat-input input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    .stat-input > div {
+      display: flex;
+      align-items: center;
+    }
+  </style>
+</body>
+</html>

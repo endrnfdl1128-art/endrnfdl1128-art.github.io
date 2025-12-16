@@ -1,246 +1,257 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI 포스터 생성기 (Gemini + Imagen)</title>
-    <style>
-        body {
-            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
-            padding: 20px;
-            background-color: #f4f6f8;
-            color: #333;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-        }
-        h1 {
-            color: #1a1a1a;
-            border-bottom: 2px solid #007bff;
-            padding-bottom: 15px;
-            margin-bottom: 30px;
-            text-align: center;
-        }
-        label {
-            display: block;
-            margin-top: 15px;
-            font-weight: 600;
-            color: #444;
-            margin-bottom: 5px;
-        }
-        input[type="text"], textarea {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            box-sizing: border-box;
-            font-size: 15px;
-            transition: border-color 0.2s;
-        }
-        input[type="text"]:focus, textarea:focus {
-            border-color: #007bff;
-            outline: none;
-        }
-        button {
-            width: 100%;
-            background-color: #007bff;
-            color: white;
-            padding: 15px;
-            margin-top: 30px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 18px;
-            font-weight: bold;
-            transition: background-color 0.2s;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-        button:disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
-        }
-
-        /* 결과 영역 스타일 */
-        #resultContainer {
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px dashed #ddd;
-            display: none; /* 초기에는 숨김 */
-            text-align: center;
-        }
-        
-        #generatedImage {
-            max-width: 100%;
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-            margin-bottom: 20px;
-        }
-
-        .prompt-box {
-            background-color: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            text-align: left;
-            font-size: 13px;
-            color: #666;
-            border: 1px solid #eee;
-        }
-
-        .required::after {
-            content: " *";
-            color: #e74c3c;
-        }
-
-        /* 로딩 스피너 */
-        .loader {
-            border: 5px solid #f3f3f3;
-            border-top: 5px solid #007bff;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
-            display: none;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI TRPG - 모험을 시작하세요</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+  <div class="header">
+    <h1>🎲 AI TRPG</h1>
+    <p>AI 게임 마스터와 함께하는 무한한 모험</p>
+  </div>
 
-<div class="container">
-    <h1>🎨 AI 포스터 디자이너</h1>
-    <p style="text-align: center; color: #666; margin-bottom: 30px;">
-  
-    </p>
-
-    <div id="posterForm">
-        <label for="text" class="required">메인 문구 / 카피</label>
-        <input type="text" id="text" value="지금 가입하면 첫 달 50% 할인!" placeholder="포스터에 들어갈 핵심 문구를 입력하세요" required>
-
-        <label for="description">캠페인 상세 설명</label>
-        <textarea id="description" rows="3" placeholder="어떤 상품이나 이벤트인가요?">헬스장 신규 오픈 기념, 3개월 등록 시 첫 달 요금 50% 할인 프로모션입니다.</textarea>
-
-        <label for="brand_tone">브랜드 톤 & 무드</label>
-        <input type="text" id="brand_tone" value="활기차고 에너지 넘치는, 깔끔한 느낌, 3D 일러스트 스타일">
-
-        <label for="target_audience">타겟 고객</label>
-        <input type="text" id="target_audience" value="20~30대 직장인">
-
-        <label for="image_keywords">이미지 키워드 (쉼표 구분)</label>
-        <input type="text" id="image_keywords" value="헬스장, 운동하는 사람, 밝은 분위기, 땀, 파란색 배경">
-        
-        <button id="generateButton" onclick="generatePosterImage()">✨ 포스터 생성하기</button>
+  <div class="container">
+    <!-- 메인 메뉴 -->
+    <div class="grid-2 mt-20" id="mainMenu">
+      <a href="scenario.html" class="menu-btn">
+        <span class="icon">⚔️</span>
+        <span class="title">새 게임</span>
+        <span class="desc">새로운 모험을 시작합니다</span>
+      </a>
+      <div class="menu-btn" id="continueBtn" onclick="showContinueMenu()">
+        <span class="icon">📜</span>
+        <span class="title">이어하기</span>
+        <span class="desc">진행 중인 게임을 계속합니다</span>
+      </div>
     </div>
 
-    <div id="loadingIndicator" class="loader"></div>
-    <p id="loadingText" style="text-align: center; display: none; color: #666;">AI가 열심히 그림을 그리고 있습니다... (약 10초 소요)</p>
-
-    <div id="resultContainer">
-        <h2 style="margin-bottom: 20px;">🎉 생성된 포스터</h2>
-        <img id="generatedImage" src="" alt="AI가 생성한 포스터" />
+    <!-- 이어하기 섹션 (숨김) -->
+    <div id="continueSection" class="hidden">
+      <div class="card">
+        <h2>📜 저장된 게임</h2>
         
-        <div class="prompt-box">
-            <strong>💡 Gemini가 작성한 프롬프트 (참고용):</strong>
-            <p id="promptUsedResult" style="margin-top: 5px; font-family: monospace;"></p>
+        <!-- 현재 진행 중인 게임 -->
+        <div id="currentGameSection" class="hidden">
+          <h3>▶️ 현재 진행 중</h3>
+          <div id="currentGame" class="save-item">
+            <!-- JS로 채움 -->
+          </div>
         </div>
-        
-        <button onclick="downloadImage()" style="background-color: #28a745; margin-top: 15px;">💾 이미지 저장하기</button>
+
+        <!-- 저장된 게임 목록 -->
+        <div id="savedGamesSection" class="mt-20">
+          <h3>💾 저장된 게임들</h3>
+          <div id="savedGamesList" class="save-list mt-20">
+            <!-- JS로 채움 -->
+          </div>
+        </div>
+
+        <div class="btn-group mt-20">
+          <button class="btn btn-secondary" onclick="hideContinueMenu()">← 뒤로</button>
+        </div>
+      </div>
     </div>
-</div>
 
-<script>
+    <!-- 하단 정보 -->
+    <div class="card mt-20">
+      <h2>🎮 게임 방법</h2>
+      <p style="color: var(--text-secondary); line-height: 1.8;">
+        1. <strong>시나리오 생성</strong> - 원하는 주제를 입력하면 AI가 세계관을 만들어줍니다.<br>
+        2. <strong>캐릭터 생성</strong> - 이름, 직업, 스탯을 설정하고 배경 스토리를 작성합니다.<br>
+        3. <strong>모험 시작</strong> - AI 게임 마스터가 상황을 묘사하고, 당신의 행동에 반응합니다.<br>
+        4. <strong>주사위 판정</strong> - 중요한 행동은 주사위로 성공 여부가 결정됩니다.
+      </p>
+    </div>
 
-    const SERVER_URL = 'https://e414bbac-a41e-431a-95c8-37e80ffa48ac-00-1p9b824eqx21u.pike.replit.dev'; 
+    <!-- 데이터 관리 -->
+    <div class="card">
+      <h2>⚙️ 데이터 관리</h2>
+      <div class="btn-group">
+        <button class="btn btn-secondary" onclick="exportData()">💾 데이터 내보내기</button>
+        <button class="btn btn-secondary" onclick="importData()">📂 데이터 가져오기</button>
+        <button class="btn btn-secondary" onclick="clearAllData()" style="color: var(--danger);">🗑️ 전체 삭제</button>
+      </div>
+      <input type="file" id="importFile" accept=".json" style="display: none;" onchange="handleImport(event)">
+    </div>
+  </div>
 
-    async function generatePosterImage() {
-        const generateButton = document.getElementById('generateButton');
-        const resultContainer = document.getElementById('resultContainer');
-        const generatedImage = document.getElementById('generatedImage');
-        const promptResult = document.getElementById('promptUsedResult');
-        const loadingIndicator = document.getElementById('loadingIndicator');
-        const loadingText = document.getElementById('loadingText');
-        
-        // 1. 입력 값 검증
-        const textValue = document.getElementById('text').value.trim();
-        if (!textValue) {
-            alert("메인 문구는 필수입니다!");
-            return;
-        }
+  <script src="js/storage.js"></script>
+  <script>
+    // 페이지 로드 시 상태 확인
+    document.addEventListener('DOMContentLoaded', () => {
+      updateContinueButton();
+    });
 
-        // 2. UI 초기화 (로딩 시작)
-        generateButton.disabled = true;
-        resultContainer.style.display = 'none';
-        loadingIndicator.style.display = 'block';
-        loadingText.style.display = 'block';
-
-        // 키워드 리스트 변환
-        const keywordsInput = document.getElementById('image_keywords').value;
-        const keywordsList = keywordsInput 
-            ? keywordsInput.split(',').map(k => k.trim()).filter(k => k.length > 0)
-            : [];
-
-        const requestData = {
-            "text": textValue,
-            "description": document.getElementById('description').value,
-            "brand_tone": document.getElementById('brand_tone').value,
-            "target_audience": document.getElementById('target_audience').value,
-            "image_keywords": keywordsList
-        };
-
-        try {
-            // 3. 백엔드 요청 (/generate_poster_image)
-            const response = await fetch(`${SERVER_URL}/generate_poster_image`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(requestData)
-            });
-
-            const data = await response.json();
-            
-            if (!response.ok) {
-                throw new Error(data.detail || '서버 오류가 발생했습니다.');
-            }
-
-            // 4. 성공 시 이미지 표시
-            // Base64 문자열을 src에 주입
-            generatedImage.src = `data:image/png;base64,${data.image_base64}`;
-            promptResult.textContent = data.prompt_used; // 사용된 프롬프트 표시
-
-            resultContainer.style.display = 'block';
-
-        } catch (error) {
-            console.error('Error:', error);
-            alert(`❌ 실패했습니다: ${error.message}`);
-        } finally {
-            // 5. 로딩 종료
-            generateButton.disabled = false;
-            loadingIndicator.style.display = 'none';
-            loadingText.style.display = 'none';
-        }
+    // 이어하기 버튼 상태 업데이트
+    function updateContinueButton() {
+      const currentGame = Storage.getCurrentGame();
+      const savedGames = Storage.getSavedGames();
+      const continueBtn = document.getElementById('continueBtn');
+      
+      if (!currentGame && savedGames.length === 0) {
+        continueBtn.style.opacity = '0.5';
+        continueBtn.querySelector('.desc').textContent = '저장된 게임이 없습니다';
+      } else {
+        continueBtn.style.opacity = '1';
+        const count = savedGames.length + (currentGame ? 1 : 0);
+        continueBtn.querySelector('.desc').textContent = `${count}개의 게임이 있습니다`;
+      }
     }
 
-    function downloadImage() {
-        const img = document.getElementById('generatedImage');
-        const link = document.createElement('a');
-        link.href = img.src;
-        link.download = 'ai_poster.png';
-        link.click();
+    // 이어하기 메뉴 표시
+    function showContinueMenu() {
+      document.getElementById('mainMenu').classList.add('hidden');
+      document.getElementById('continueSection').classList.remove('hidden');
+      loadContinueData();
     }
-</script>
 
+    // 이어하기 메뉴 숨김
+    function hideContinueMenu() {
+      document.getElementById('mainMenu').classList.remove('hidden');
+      document.getElementById('continueSection').classList.add('hidden');
+    }
+
+    // 이어하기 데이터 로드
+    function loadContinueData() {
+      const currentGame = Storage.getCurrentGame();
+      const savedGames = Storage.getSavedGames();
+
+      // 현재 진행 중인 게임
+      const currentSection = document.getElementById('currentGameSection');
+      const currentDiv = document.getElementById('currentGame');
+      
+      if (currentGame) {
+        currentSection.classList.remove('hidden');
+        currentDiv.innerHTML = `
+          <div class="save-info">
+            <h4>${currentGame.scenario?.title || '제목 없음'}</h4>
+            <p>${currentGame.character?.name || '캐릭터 없음'} · ${formatDate(currentGame.updated_at)}</p>
+          </div>
+          <div class="save-actions">
+            <button class="btn btn-primary" onclick="continueCurrentGame()">계속하기</button>
+            <button class="btn btn-secondary" onclick="abandonCurrentGame()">포기</button>
+          </div>
+        `;
+      } else {
+        currentSection.classList.add('hidden');
+      }
+
+      // 저장된 게임 목록
+      const listDiv = document.getElementById('savedGamesList');
+      
+      if (savedGames.length === 0) {
+        listDiv.innerHTML = '<p class="text-muted">저장된 게임이 없습니다.</p>';
+      } else {
+        listDiv.innerHTML = savedGames.map(save => `
+          <div class="save-item">
+            <div class="save-info">
+              <h4>${save.save_name || save.scenario?.title || '제목 없음'}</h4>
+              <p>${save.character?.name || '캐릭터 없음'} · ${formatDate(save.saved_at)}</p>
+            </div>
+            <div class="save-actions">
+              <button class="btn btn-primary" onclick="loadSavedGame('${save.id}')">불러오기</button>
+              <button class="btn btn-secondary" onclick="deleteSavedGame('${save.id}')">삭제</button>
+            </div>
+          </div>
+        `).join('');
+      }
+    }
+
+    // 현재 게임 계속
+    function continueCurrentGame() {
+      window.location.href = 'game.html';
+    }
+
+    // 현재 게임 포기
+    function abandonCurrentGame() {
+      if (confirm('정말 현재 게임을 포기하시겠습니까? 저장하지 않은 진행 상황은 사라집니다.')) {
+        Storage.clearCurrentGame();
+        loadContinueData();
+        updateContinueButton();
+      }
+    }
+
+    // 저장된 게임 불러오기
+    function loadSavedGame(saveId) {
+      const currentGame = Storage.getCurrentGame();
+      if (currentGame) {
+        if (!confirm('현재 진행 중인 게임이 있습니다. 저장된 게임을 불러오면 현재 게임은 사라집니다. 계속하시겠습니까?')) {
+          return;
+        }
+      }
+      Storage.loadGame(saveId);
+      window.location.href = 'game.html';
+    }
+
+    // 저장된 게임 삭제
+    function deleteSavedGame(saveId) {
+      if (confirm('이 저장 데이터를 삭제하시겠습니까?')) {
+        Storage.deleteSavedGame(saveId);
+        loadContinueData();
+        updateContinueButton();
+      }
+    }
+
+    // 데이터 내보내기
+    function exportData() {
+      const data = Storage.exportData();
+      const blob = new Blob([data], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `trpg_backup_${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // 데이터 가져오기
+    function importData() {
+      document.getElementById('importFile').click();
+    }
+
+    function handleImport(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (Storage.importData(e.target.result)) {
+          alert('데이터를 성공적으로 가져왔습니다.');
+          updateContinueButton();
+        } else {
+          alert('데이터 가져오기에 실패했습니다.');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // 전체 삭제
+    function clearAllData() {
+      if (confirm('정말 모든 데이터를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
+        if (confirm('마지막 확인입니다. 모든 시나리오, 캐릭터, 게임 저장이 삭제됩니다.')) {
+          Storage.clearAll();
+          alert('모든 데이터가 삭제되었습니다.');
+          updateContinueButton();
+        }
+      }
+    }
+
+    // 날짜 포맷
+    function formatDate(dateStr) {
+      if (!dateStr) return '';
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('ko-KR', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+  </script>
 </body>
 </html>
-
-

@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>모험 중... - AI TRPG</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+  <div class="game-container">
+    <!-- 사이드바 -->
+    <div class="sidebar">
+      <!-- 캐릭터 정보 -->
+      <div class="character-panel">
+        <h3>🧙 <span id="charName">캐릭터</span></h3>
+        <p class="text-muted" id="charClass">직업</p>
+
+        <!-- HP 바 -->
+        <div class="hp-bar">
+          <div class="hp-bar-fill healthy" id="hpBar" style="width: 100%;">
+            <span id="hpText">100/100</span>
+          </div>
+        </div>
+
+        <!-- 스탯 -->
+        <div class="stats-grid">
+          <div class="stat-item">
+            <span class="name">💪 힘</span>
+            <span class="value" id="statStr">10</span>
+          </div>
+          <div class="stat-item">
+            <span class="name">🏃 민첩</span>
+            <span class="value" id="statAgi">10</span>
+          </div>
+          <div class="stat-item">
+            <span class="name">🧠 지능</span>
+            <span class="value" id="statInt">10</span>
+          </div>
+          <div class="stat-item">
+            <span class="name">🍀 행운</span>
+            <span class="value" id="statLuck">10</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 인벤토리 -->
+      <div class="character-panel">
+        <h3>🎒 소지품</h3>
+        <ul class="inventory-list" id="inventoryList">
+          <!-- JS로 채움 -->
+        </ul>
+      </div>
+
+      <!-- 게임 메뉴 -->
+      <div class="character-panel">
+        <h3>⚙️ 메뉴</h3>
+
+        <!-- 이미지 설정 -->
+        <div class="image-settings">
+          <label>🖼️ 장면 이미지</label>
+          <div class="image-mode-select">
+            <button class="image-mode-btn" data-mode="off" onclick="setImageMode('off')">끄기</button>
+            <button class="image-mode-btn" data-mode="pollinations" onclick="setImageMode('pollinations')">기본</button>
+            <!-- <button class="image-mode-btn" data-mode="gemini" onclick="setImageMode('gemini')">고급</button> -->
+          </div>
+        </div>
+
+        <button class="btn btn-secondary btn-block" onclick="saveGame()" style="margin-bottom: 8px;">💾 저장</button>
+        <button class="btn btn-secondary btn-block" onclick="showScenarioInfo()" style="margin-bottom: 8px;">📖 시나리오
+          정보</button>
+        <button class="btn btn-secondary btn-block" onclick="quitGame()">🚪 나가기</button>
+      </div>
+    </div>
+
+    <!-- 메인 게임 영역 -->
+    <div class="game-main">
+      <!-- 헤더 -->
+      <div class="game-header">
+        <h2 id="scenarioTitle">🎲 모험 중</h2>
+        <div class="danger-indicator safe" id="dangerIndicator">안전</div>
+      </div>
+
+      <!-- 장면 이미지 -->
+      <div class="scene-image-container" id="sceneImageContainer" style="display: none;">
+        <img src="" alt="장면 이미지" class="scene-image" id="sceneImage">
+        <div class="image-loading-overlay" id="imageLoading" style="display: none;">
+          <div class="loading">
+            <div class="loading-spinner"></div>
+            <span>이미지 생성 중...</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 게임 로그 -->
+      <div class="game-log" id="gameLog">
+        <!-- JS로 채움 -->
+      </div>
+
+      <!-- 로딩 표시 -->
+      <div id="loadingIndicator" class="hidden" style="padding: 16px; text-align: center;">
+        <div class="loading">
+          <div class="loading-spinner"></div>
+          <span>AI가 응답을 생성하고 있습니다...</span>
+        </div>
+      </div>
+
+      <!-- 입력 영역 -->
+      <div class="game-input">
+        <input type="text" id="actionInput" placeholder="무엇을 하시겠습니까? (예: 문을 연다, 주변을 살핀다)">
+        <button class="btn btn-primary" id="submitBtn" onclick="submitAction()">행동</button>
+        <button class="btn btn-secondary" onclick="rollCustomDice()">🎲</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 주사위 모달 -->
+  <div class="modal-overlay" id="diceModal">
+    <div class="modal">
+      <h2>🎲 주사위 판정</h2>
+      <p id="rollReason">판정 중...</p>
+      <div class="dice-result" id="diceResult">?</div>
+      <div class="roll-details" id="rollDetails">
+        <!-- 주사위 결과 상세 -->
+      </div>
+      <button class="btn btn-primary" onclick="closeDiceModal()">확인</button>
+    </div>
+  </div>
+
+  <!-- 시나리오 정보 모달 -->
+  <div class="modal-overlay" id="scenarioModal">
+    <div class="modal" style="max-width: 600px; text-align: left;">
+      <h2>📖 시나리오 정보</h2>
+      <div id="scenarioInfo">
+        <!-- JS로 채움 -->
+      </div>
+      <button class="btn btn-primary mt-20" onclick="closeScenarioModal()">닫기</button>
+    </div>
+  </div>
+
+  <!-- 저장 모달 -->
+  <div class="modal-overlay" id="saveModal">
+    <div class="modal">
+      <h2>💾 게임 저장</h2>
+      <div class="form-group">
+        <label for="saveName">저장 이름</label>
+        <input type="text" id="saveName" placeholder="저장 이름을 입력하세요">
+      </div>
+      <div class="btn-group" style="justify-content: center;">
+        <button class="btn btn-secondary" onclick="closeSaveModal()">취소</button>
+        <button class="btn btn-primary" onclick="confirmSave()">저장</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/storage.js"></script>
+  <script src="js/api.js"></script>
+  <script>
+    let gameState = null;
+    let isProcessing = false;
+    let pendingRoll = null; // 대기 중인 주사위 판정
+    let imageMode = 'off'; // 이미지 모드
+
+    // 페이지 로드
+    document.addEventListener('DOMContentLoaded', () => {
+      loadGame();
+      loadImageSettings();
+
+      // Enter 키로 행동
+      document.getElementById('actionInput').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && !isProcessing) submitAction();
+      });
+    });
+
+    // 이미지 설정 로드
+    function loadImageSettings() {
+      imageMode = Storage.getImageMode();
+      updateImageModeUI();
+    }
+
+    // 이미지 모드 설정
+    function setImageMode(mode) {
+      imageMode = mode;
+      Storage.setImageMode(mode);
+      updateImageModeUI();
+
+      // 이미지 영역 표시/숨김
+      const container = document.getElementById('sceneImageContainer');
+      if (mode === 'off') {
+        container.style.display = 'none';
+      }
+    }
+
+    // 이미지 모드 UI 업데이트
+    function updateImageModeUI() {
+      document.querySelectorAll('.image-mode-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.mode === imageMode);
+      });
+    }
+
+    // 장면 이미지 생성 및 표시
+    async function showSceneImage(imagePrompt) {
+      if (imageMode === 'off' || !imagePrompt) {
+        document.getElementById('sceneImageContainer').style.display = 'none';
+        return;
+      }
+
+      const container = document.getElementById('sceneImageContainer');
+      const img = document.getElementById('sceneImage');
+      const loading = document.getElementById('imageLoading');
+
+      // 로딩 표시
+      container.style.display = 'block';
+      loading.style.display = 'flex';
+      img.classList.add('loading');
+
+      try {
+        const theme = gameState?.scenario?.theme || 'fantasy';
+        const imageUrl = await API.getImageUrl(imagePrompt, imageMode, theme);
+
+        if (imageUrl) {
+          // 이미지 프리로드
+          const tempImg = new Image();
+          tempImg.onload = () => {
+            img.src = imageUrl;
+            img.classList.remove('loading');
+            loading.style.display = 'none';
+          };
+          tempImg.onerror = () => {
+            console.error('Image load failed');
+            container.style.display = 'none';
+          };
+          tempImg.src = imageUrl;
+        } else {
+          container.style.display = 'none';
+        }
+      } catch (error) {
+        console.error('Image generation error:', error);
+        container.style.display = 'none';
+      }
+    }
+
+    // 게임 로드
+    function loadGame() {
+      gameState = Storage.getCurrentGame();
+
+      if (!gameState) {
+        alert('진행 중인 게임이 없습니다.');
+        window.location.href = 'index.html';
+        return;
+      }
+
+      updateUI();
+      renderHistory();
+
+      // 첫 시작이면 오프닝 표시
+      if (gameState.history.length === 0) {
+        startGame();
+      }
+    }
+
+    // 게임 시작 (첫 장면)
+    async function startGame() {
+      const scenario = gameState.scenario;
+      const character = gameState.character;
+
+      // 시작 장면이 있으면 표시
+      if (scenario.starting_scene) {
+        addLogEntry('gm', scenario.starting_scene);
+        Storage.addToHistory('gm', scenario.starting_scene);
+
+        // 첫 장면 이미지 생성
+        const startingImagePrompt = `${scenario.setting}, ${scenario.theme || 'fantasy'} scene, cinematic`;
+        showSceneImage(startingImagePrompt);
+      } else {
+        // 없으면 AI에게 첫 장면 요청
+        setLoading(true);
+        try {
+          const result = await API.processAction(gameState, '[게임 시작] 첫 장면을 묘사해주세요.');
+          addLogEntry('gm', result.narration);
+          Storage.addToHistory('gm', result.narration);
+          updateDanger(result.danger_level);
+
+          // 첫 장면 이미지 생성
+          if (result.image_prompt) {
+            showSceneImage(result.image_prompt);
+          }
+        } catch (error) {
+          addLogEntry('system', '⚠️ 오류: ' + error.message);
+        }
+        setLoading(false);
+      }
+    }
+
+    // UI 업데이트
+    function updateUI() {
+      const char = gameState.character;
+      const scenario = gameState.scenario;
+
+      // 캐릭터 정보
+      document.getElementById('charName').textContent = char.name;
+      document.getElementById('charClass').textContent = char.class;
+
+      // HP
+      updateHP();
+
+      // 스탯
+      document.getElementById('statStr').textContent = char.stats.strength;
+      document.getElementById('statAgi').textContent = char.stats.agility;
+      document.getElementById('statInt').textContent = char.stats.intelligence;
+      document.getElementById('statLuck').textContent = char.stats.luck;
+
+      // 인벤토리
+      updateInventory();
+
+      // 시나리오 제목
+      document.getElementById('scenarioTitle').textContent = scenario.title;
+      document.title = `${scenario.title} - AI TRPG`;
+
+      // 위험도
+      updateDanger(gameState.danger_level);
+    }
+
+    // HP 업데이트
+    function updateHP() {
+      const char = gameState.character;
+      const hp = char.stats.hp;
+      const maxHp = char.stats.maxHp;
+      const percent = (hp / maxHp) * 100;
+
+      const hpBar = document.getElementById('hpBar');
+      const hpText = document.getElementById('hpText');
+
+      hpBar.style.width = percent + '%';
+      hpText.textContent = `${hp}/${maxHp}`;
+
+      // HP에 따른 색상
+      hpBar.classList.remove('healthy', 'warning', 'danger');
+      if (percent > 60) {
+        hpBar.classList.add('healthy');
+      } else if (percent > 30) {
+        hpBar.classList.add('warning');
+      } else {
+        hpBar.classList.add('danger');
+      }
+
+      // 사망 체크
+      if (hp <= 0) {
+        gameOver();
+      }
+    }
+
+    // 인벤토리 업데이트
+    function updateInventory() {
+      const list = document.getElementById('inventoryList');
+      const inventory = gameState.character.inventory || [];
+
+      if (inventory.length === 0) {
+        list.innerHTML = '<li class="text-muted">빈 가방</li>';
+      } else {
+        list.innerHTML = inventory.map(item => `<li>• ${item}</li>`).join('');
+      }
+    }
+
+    // 위험도 업데이트
+    function updateDanger(level) {
+      const indicator = document.getElementById('dangerIndicator');
+      indicator.classList.remove('safe', 'caution', 'danger');
+
+      switch (level) {
+        case 'danger':
+          indicator.classList.add('danger');
+          indicator.textContent = '위험';
+          break;
+        case 'caution':
+          indicator.classList.add('caution');
+          indicator.textContent = '주의';
+          break;
+        default:
+          indicator.classList.add('safe');
+          indicator.textContent = '안전';
+      }
+
+      gameState.danger_level = level;
+    }
+
+    // 히스토리 렌더링
+    function renderHistory() {
+      const log = document.getElementById('gameLog');
+      log.innerHTML = '';
+
+      gameState.history.forEach(entry => {
+        addLogEntry(entry.role, entry.text, false);
+      });
+
+      scrollToBottom();
+    }
+
+    // 문자열을 색상으로 변환 (해시)
+    function stringToColor(str) {
+      let hash = 0;
+      for (let i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+      }
+
+      // HSL을 사용하여 파스텔 톤 색상 생성 (채도와 명도를 높게 고정)
+      const h = Math.abs(hash % 360);
+      return `hsl(${h}, 70%, 65%)`; // 채도 70%, 명도 65%로 밝고 선명하게
+    }
+
+    // 로그 항목 추가
+    function addLogEntry(role, text, name = null, scroll = true) {
+      const log = document.getElementById('gameLog');
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${role}`;
+
+      let roleLabel = '';
+      let styleAttr = '';
+
+      switch (role) {
+        case 'gm':
+          roleLabel = '🎭 게임 마스터';
+          break;
+        case 'player':
+          roleLabel = '👤 나';
+          break;
+        case 'system':
+          roleLabel = '🎲 시스템';
+          break;
+        case 'npc':
+          const npcName = name || 'NPC';
+          const npcColor = stringToColor(npcName);
+          roleLabel = `<span style="color: ${npcColor}">💬 ${npcName}</span>`;
+          styleAttr = `style="border-left-color: ${npcColor}; background: linear-gradient(90deg, ${npcColor}11, var(--bg-card))"`;
+          break;
+      }
+
+      entry.innerHTML = `
+        <div class="role">${roleLabel}</div>
+        <div class="text">${text}</div>
+      `;
+
+      // NPC일 경우 스타일 직접 적용
+      if (role === 'npc') {
+        const npcName = name || 'NPC';
+        const npcColor = stringToColor(npcName);
+        entry.style.borderLeftColor = npcColor;
+        // 배경에 살짝 틴트 주기
+        entry.style.background = `linear-gradient(90deg, ${npcColor}1a, var(--bg-card))`;
+      }
+
+      log.appendChild(entry);
+      if (scroll) scrollToBottom();
+    }
+
+    // 스크롤 하단으로 (렌더링 타이밍 고려)
+    function scrollToBottom() {
+      const log = document.getElementById('gameLog');
+
+      // 즉시 실행
+      log.scrollTop = log.scrollHeight;
+
+      // 약간의 지연 후 재실행 (이미지 로드나 DOM 렌더링 완료 후)
+      requestAnimationFrame(() => {
+        log.scrollTo({
+          top: log.scrollHeight,
+          behavior: 'smooth'
+        });
+      });
+    }
+
+    // 행동 제출
+    async function submitAction() {
+      const input = document.getElementById('actionInput');
+      const action = input.value.trim();
+
+      if (!action || isProcessing) return;
+
+      // 플레이어 행동 표시
+      addLogEntry('player', action);
+      Storage.addToHistory('player', action);
+      input.value = '';
+
+      // AI 응답 요청
+      setLoading(true);
+
+      try {
+        // 최신 게임 상태 가져오기
+        gameState = Storage.getCurrentGame();
+
+        const result = await API.processAction(gameState, action);
+
+        // 주사위 판정이 필요한 경우
+        if (result.requires_roll && result.roll_type) {
+          pendingRoll = {
+            action: action,
+            rollType: result.roll_type,
+            difficulty: result.roll_difficulty || 12
+          };
+
+          // 판정 필요 서술
+          addLogEntry('gm', result.narration);
+          Storage.addToHistory('gm', result.narration);
+
+          // NPC 대사 처리
+          if (result.dialogues && result.dialogues.length > 0) {
+            result.dialogues.forEach(d => {
+              addLogEntry('npc', d.text, d.speaker);
+              Storage.addToHistory('npc', `${d.speaker}: ${d.text}`);
+            });
+          }
+
+          const statName = getStatName(result.roll_type);
+          addLogEntry('system', `🎲 ${statName} 판정이 필요합니다! (목표: ${result.roll_difficulty}) 주사위 버튼을 눌러주세요.`);
+          Storage.addToHistory('system', `${statName} 판정 필요 (목표: ${result.roll_difficulty})`);
+
+        } else {
+          // 일반 응답
+          addLogEntry('gm', result.narration);
+          Storage.addToHistory('gm', result.narration);
+
+          // NPC 대사 처리
+          if (result.dialogues && result.dialogues.length > 0) {
+            result.dialogues.forEach(d => {
+              addLogEntry('npc', d.text, d.speaker);
+              Storage.addToHistory('npc', `${d.speaker}: ${d.text}`);
+            });
+          }
+
+          // 상태 변경 적용
+          applyStateChanges(result);
+
+          // 장면 이미지 생성
+          if (result.image_prompt) {
+            showSceneImage(result.image_prompt);
+          }
+        }
+
+        updateDanger(result.danger_level || 'safe');
+
+      } catch (error) {
+        addLogEntry('system', '⚠️ 오류가 발생했습니다: ' + error.message);
+      }
+
+      setLoading(false);
+    }
+
+    // 상태 변경 적용
+    function applyStateChanges(result) {
+      let updated = false;
+
+      if (result.damage_taken > 0) {
+        Storage.updateCharacterState({ damage: result.damage_taken });
+        addLogEntry('system', `💔 ${result.damage_taken} 피해를 입었습니다!`);
+        updated = true;
+      }
+
+      if (result.items_gained && result.items_gained.length > 0) {
+        Storage.updateCharacterState({ addItems: result.items_gained });
+        addLogEntry('system', `🎁 획득: ${result.items_gained.join(', ')}`);
+        updated = true;
+      }
+
+      if (result.items_lost && result.items_lost.length > 0) {
+        Storage.updateCharacterState({ removeItems: result.items_lost });
+        addLogEntry('system', `📤 잃음: ${result.items_lost.join(', ')}`);
+        updated = true;
+      }
+
+      if (updated) {
+        gameState = Storage.getCurrentGame();
+        updateUI();
+      }
+    }
+
+    // 주사위 굴리기
+    async function rollCustomDice() {
+      if (!pendingRoll) {
+        // 대기 중인 판정이 없으면 행운 체크
+        addLogEntry('system', '🎲 행운 체크! (일반 주사위)');
+        const result = await API.rollDice(gameState.character.stats.luck, 10);
+        showDiceResult('행운 체크', result);
+        return;
+      }
+
+      // 대기 중인 판정 처리
+      const stat = gameState.character.stats[pendingRoll.rollType];
+      const result = await API.rollDice(stat, pendingRoll.difficulty);
+
+      showDiceResult(`${getStatName(pendingRoll.rollType)} 판정`, result);
+
+      // 판정 결과에 따른 서술 요청
+      setLoading(true);
+      try {
+        const narration = await API.getRollNarration(
+          gameState,
+          pendingRoll.action,
+          result
+        );
+
+        addLogEntry('gm', narration.narration);
+        Storage.addToHistory('gm', narration.narration);
+
+        // NPC 대사 처리
+        if (narration.dialogues && narration.dialogues.length > 0) {
+          narration.dialogues.forEach(d => {
+            addLogEntry('npc', d.text, d.speaker);
+            Storage.addToHistory('npc', `${d.speaker}: ${d.text}`);
+          });
+        }
+
+        applyStateChanges(narration);
+        updateDanger(narration.danger_level || gameState.danger_level);
+
+        // 장면 이미지 생성
+        if (narration.image_prompt) {
+          showSceneImage(narration.image_prompt);
+        }
+
+      } catch (error) {
+        // 오류 시 기본 메시지
+        if (result.is_success) {
+          addLogEntry('gm', '행동이 성공했습니다.');
+        } else {
+          addLogEntry('gm', '행동이 실패했습니다...');
+        }
+      }
+      setLoading(false);
+
+      pendingRoll = null;
+    }
+
+    // 주사위 결과 표시
+    function showDiceResult(reason, result) {
+      const modal = document.getElementById('diceModal');
+      const resultDiv = document.getElementById('diceResult');
+      const detailsDiv = document.getElementById('rollDetails');
+
+      document.getElementById('rollReason').textContent = reason;
+
+      // 결과 표시
+      resultDiv.textContent = result.total;
+      resultDiv.classList.remove('success', 'failure', 'critical');
+
+      if (result.is_critical) {
+        resultDiv.classList.add('critical');
+        resultDiv.textContent = result.total + ' ★';
+      } else if (result.is_success) {
+        resultDiv.classList.add('success');
+      } else {
+        resultDiv.classList.add('failure');
+      }
+
+      // 상세 정보
+      let statusText = result.is_critical ? '🌟 대성공!' :
+        result.is_fumble ? '💀 대실패!' :
+          result.is_success ? '✅ 성공!' : '❌ 실패';
+
+      detailsDiv.innerHTML = `
+        주사위: ${result.roll} + 보너스: ${result.bonus} = ${result.total}<br>
+        목표 수치: ${result.difficulty}<br>
+        <strong>${statusText}</strong>
+      `;
+
+      // 로그에도 기록
+      Storage.addToHistory('system', `🎲 ${reason}: ${result.roll}+${result.bonus}=${result.total} (목표 ${result.difficulty}) → ${statusText}`);
+
+      modal.classList.add('active');
+    }
+
+    // 스탯 이름 변환
+    function getStatName(type) {
+      const names = {
+        strength: '💪 힘',
+        agility: '🏃 민첩',
+        intelligence: '🧠 지능',
+        luck: '🍀 행운'
+      };
+      return names[type] || type;
+    }
+
+    // 주사위 모달 닫기
+    function closeDiceModal() {
+      document.getElementById('diceModal').classList.remove('active');
+    }
+
+    // 로딩 상태
+    function setLoading(loading) {
+      isProcessing = loading;
+      document.getElementById('loadingIndicator').classList.toggle('hidden', !loading);
+      document.getElementById('submitBtn').disabled = loading;
+      document.getElementById('actionInput').disabled = loading;
+    }
+
+    // 게임 저장
+    function saveGame() {
+      const modal = document.getElementById('saveModal');
+      document.getElementById('saveName').value = gameState.scenario.title + ' - ' + new Date().toLocaleDateString('ko-KR');
+      modal.classList.add('active');
+    }
+
+    function confirmSave() {
+      const name = document.getElementById('saveName').value.trim();
+      if (!name) {
+        alert('저장 이름을 입력해주세요.');
+        return;
+      }
+
+      Storage.saveGame(name);
+      closeSaveModal();
+      addLogEntry('system', '💾 게임이 저장되었습니다.');
+    }
+
+    function closeSaveModal() {
+      document.getElementById('saveModal').classList.remove('active');
+    }
+
+    // 시나리오 정보
+    function showScenarioInfo() {
+      const scenario = gameState.scenario;
+      const infoDiv = document.getElementById('scenarioInfo');
+
+      infoDiv.innerHTML = `
+        <h3 style="color: var(--accent); margin-bottom: 16px;">${scenario.title}</h3>
+        
+        <p><strong>🌍 세계관:</strong><br>${scenario.setting}</p>
+        <p style="margin-top: 12px;"><strong>🎯 목표:</strong><br>${scenario.goal}</p>
+        
+        <p style="margin-top: 12px;"><strong>📍 장소:</strong><br>
+        ${(scenario.locations || []).join(', ')}</p>
+        
+        <p style="margin-top: 12px;"><strong>👥 NPC:</strong></p>
+        <ul style="margin-left: 20px;">
+          ${(scenario.npcs || []).map(npc => `<li><strong>${npc.name}</strong> (${npc.role}) - ${npc.personality}</li>`).join('')}
+        </ul>
+        
+        <p style="margin-top: 12px;"><strong>⚠️ 위협:</strong><br>
+        ${(scenario.threats || []).join(', ')}</p>
+      `;
+
+      document.getElementById('scenarioModal').classList.add('active');
+    }
+
+    function closeScenarioModal() {
+      document.getElementById('scenarioModal').classList.remove('active');
+    }
+
+    // 게임 나가기
+    function quitGame() {
+      if (confirm('게임을 나가시겠습니까? 저장하지 않은 진행 상황은 유지됩니다.')) {
+        window.location.href = 'index.html';
+      }
+    }
+
+    // 게임 오버
+    function gameOver() {
+      addLogEntry('system', '💀 캐릭터가 사망했습니다... 게임 오버');
+      document.getElementById('actionInput').disabled = true;
+      document.getElementById('submitBtn').disabled = true;
+
+      setTimeout(() => {
+        if (confirm('캐릭터가 사망했습니다. 메인 화면으로 돌아가시겠습니까?')) {
+          Storage.clearCurrentGame();
+          window.location.href = 'index.html';
+        }
+      }, 2000);
+    }
+  </script>
+</body>
+
+</html>

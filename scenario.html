@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>시나리오 생성 - AI TRPG</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="header">
+    <h1>📖 시나리오 생성</h1>
+    <p>어떤 모험을 원하시나요?</p>
+  </div>
+
+  <div class="container">
+    <!-- Step 1: 주제 선택 -->
+    <div id="step1" class="card">
+      <h2>1. 주제 선택</h2>
+      
+      <p style="color: var(--text-secondary); margin-bottom: 20px;">
+        추천 장르를 선택하거나 직접 원하는 주제를 입력하세요.
+      </p>
+
+      <!-- 추천 장르 -->
+      <div class="grid-4 mb-20">
+        <button class="theme-btn" onclick="selectTheme('중세 판타지')">🏰 중세 판타지</button>
+        <button class="theme-btn" onclick="selectTheme('좀비 아포칼립스')">🧟 좀비</button>
+        <button class="theme-btn" onclick="selectTheme('우주 SF')">🚀 우주 SF</button>
+        <button class="theme-btn" onclick="selectTheme('공포/호러')">👻 호러</button>
+        <button class="theme-btn" onclick="selectTheme('사이버펑크')">🤖 사이버펑크</button>
+        <button class="theme-btn" onclick="selectTheme('조선시대 사극')">🎎 조선시대</button>
+        <button class="theme-btn" onclick="selectTheme('추리/미스터리')">🔍 추리</button>
+        <button class="theme-btn" onclick="selectTheme('학원/일상')">🏫 학원물</button>
+      </div>
+
+      <!-- 직접 입력 -->
+      <div class="form-group">
+        <label for="customTheme">또는 직접 입력:</label>
+        <input type="text" id="customTheme" placeholder="예: 1920년대 미국 갱스터, 이세계 던전 탐험 등">
+      </div>
+
+      <div class="btn-group">
+        <a href="index.html" class="btn btn-secondary">← 뒤로</a>
+        <button class="btn btn-primary btn-large" onclick="generateScenario()">🎲 시나리오 생성</button>
+      </div>
+    </div>
+
+    <!-- 로딩 -->
+    <div id="loadingSection" class="card hidden">
+      <div class="loading">
+        <div class="loading-spinner"></div>
+        <span>AI가 시나리오를 만들고 있습니다...</span>
+      </div>
+      <p class="text-center text-muted">세계관, 등장인물, 스토리를 구성 중입니다. 잠시만 기다려주세요.</p>
+    </div>
+
+    <!-- Step 2: 시나리오 미리보기 -->
+    <div id="step2" class="hidden">
+      <div class="card">
+        <h2>✨ 생성된 시나리오</h2>
+        
+        <div class="scenario-preview" id="scenarioPreview">
+          <!-- JS로 채움 -->
+        </div>
+
+        <div class="btn-group mt-20">
+          <button class="btn btn-secondary" onclick="regenerate()">🔄 다시 생성</button>
+          <button class="btn btn-primary btn-large" onclick="confirmScenario()">✅ 이 시나리오로 진행</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 기존 시나리오 선택 -->
+    <div class="card mt-20" id="existingScenarios">
+      <h2>📚 저장된 시나리오</h2>
+      <div id="scenarioList">
+        <!-- JS로 채움 -->
+      </div>
+    </div>
+  </div>
+
+  <script src="js/storage.js"></script>
+  <script src="js/api.js"></script>
+  <script>
+    let currentTheme = '';
+    let generatedScenario = null;
+
+    // 페이지 로드 시
+    document.addEventListener('DOMContentLoaded', () => {
+      loadExistingScenarios();
+      
+      // Enter 키로 생성
+      document.getElementById('customTheme').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') generateScenario();
+      });
+    });
+
+    // 테마 선택
+    function selectTheme(theme) {
+      currentTheme = theme;
+      document.getElementById('customTheme').value = theme;
+      
+      // 버튼 활성화 표시
+      document.querySelectorAll('.theme-btn').forEach(btn => {
+        btn.classList.remove('selected');
+        if (btn.textContent.includes(theme.split(' ')[0]) || btn.textContent.includes(theme)) {
+          btn.classList.add('selected');
+        }
+      });
+    }
+
+    // 시나리오 생성
+    async function generateScenario() {
+      const theme = document.getElementById('customTheme').value.trim() || currentTheme;
+      
+      if (!theme) {
+        alert('주제를 선택하거나 입력해주세요.');
+        return;
+      }
+
+      // UI 상태 변경
+      document.getElementById('step1').classList.add('hidden');
+      document.getElementById('loadingSection').classList.remove('hidden');
+      document.getElementById('step2').classList.add('hidden');
+
+      try {
+        const scenario = await API.generateScenario(theme);
+        scenario.theme = theme;
+        generatedScenario = scenario;
+        
+        displayScenario(scenario);
+        
+        document.getElementById('loadingSection').classList.add('hidden');
+        document.getElementById('step2').classList.remove('hidden');
+      } catch (error) {
+        alert('시나리오 생성 중 오류가 발생했습니다: ' + error.message);
+        document.getElementById('loadingSection').classList.add('hidden');
+        document.getElementById('step1').classList.remove('hidden');
+      }
+    }
+
+    // 시나리오 표시
+    function displayScenario(scenario) {
+      const preview = document.getElementById('scenarioPreview');
+      
+      preview.innerHTML = `
+        <h3>${scenario.title}</h3>
+        
+        <div class="preview-section">
+          <h4>🌍 세계관</h4>
+          <p>${scenario.setting}</p>
+        </div>
+        
+        <div class="preview-section">
+          <h4>🎯 목표</h4>
+          <p>${scenario.goal}</p>
+        </div>
+        
+        <div class="preview-section">
+          <h4>📍 주요 장소</h4>
+          <div class="tag-list">
+            ${(scenario.locations || []).map(loc => `<span class="tag">${loc}</span>`).join('')}
+          </div>
+        </div>
+        
+        <div class="preview-section">
+          <h4>👥 등장인물 (NPC)</h4>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            ${(scenario.npcs || []).map(npc => `
+              <div style="background: var(--bg-secondary); padding: 12px; border-radius: 8px;">
+                <strong>${npc.name}</strong> - ${npc.role}<br>
+                <span class="text-muted">${npc.personality}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+        
+        <div class="preview-section">
+          <h4>⚠️ 위협 요소</h4>
+          <div class="tag-list">
+            ${(scenario.threats || []).map(t => `<span class="tag" style="background: rgba(239, 68, 68, 0.2);">${t}</span>`).join('')}
+          </div>
+        </div>
+        
+        ${scenario.items ? `
+        <div class="preview-section">
+          <h4>🎒 획득 가능 아이템</h4>
+          <div class="tag-list">
+            ${scenario.items.map(item => `<span class="tag" style="background: rgba(74, 222, 128, 0.2);">${item}</span>`).join('')}
+          </div>
+        </div>
+        ` : ''}
+        
+        ${scenario.starting_scene ? `
+        <div class="preview-section">
+          <h4>🎬 시작 장면</h4>
+          <p style="font-style: italic; color: var(--text-secondary);">"${scenario.starting_scene}"</p>
+        </div>
+        ` : ''}
+      `;
+    }
+
+    // 다시 생성
+    function regenerate() {
+      document.getElementById('step2').classList.add('hidden');
+      document.getElementById('step1').classList.remove('hidden');
+    }
+
+    // 시나리오 확정
+    function confirmScenario() {
+      if (!generatedScenario) {
+        alert('생성된 시나리오가 없습니다.');
+        return;
+      }
+
+      const saved = Storage.saveScenario(generatedScenario);
+      
+      // 캐릭터 생성 페이지로 이동 (시나리오 ID 전달)
+      window.location.href = `character.html?scenario=${saved.id}`;
+    }
+
+    // 기존 시나리오 로드
+    function loadExistingScenarios() {
+      const scenarios = Storage.getScenarios();
+      const listDiv = document.getElementById('scenarioList');
+
+      if (scenarios.length === 0) {
+        listDiv.innerHTML = '<p class="text-muted">저장된 시나리오가 없습니다.</p>';
+        return;
+      }
+
+      listDiv.innerHTML = scenarios.map(s => `
+        <div class="save-item">
+          <div class="save-info">
+            <h4>${s.title}</h4>
+            <p>${s.theme || '알 수 없음'} · ${formatDate(s.created_at)}</p>
+          </div>
+          <div class="save-actions">
+            <button class="btn btn-primary" onclick="useScenario('${s.id}')">선택</button>
+            <button class="btn btn-secondary" onclick="deleteScenario('${s.id}')">삭제</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // 기존 시나리오 사용
+    function useScenario(id) {
+      window.location.href = `character.html?scenario=${id}`;
+    }
+
+    // 시나리오 삭제
+    function deleteScenario(id) {
+      if (confirm('이 시나리오를 삭제하시겠습니까?')) {
+        Storage.deleteScenario(id);
+        loadExistingScenarios();
+      }
+    }
+
+    // 날짜 포맷
+    function formatDate(dateStr) {
+      if (!dateStr) return '';
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('ko-KR', {
+        month: 'short',
+        day: 'numeric'
+      });
+    }
+  </script>
+</body>
+</html>
